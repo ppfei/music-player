@@ -1,6 +1,10 @@
-# vue-demo
+# Music Player
 
 > A Vue.js project
+
+## 关于代理
+
+跨域问题，需要后台做代理；请求的代码在*App.vue*中，自行处理
 
 ## Build Setup
 

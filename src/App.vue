@@ -1,11 +1,17 @@
 <template>
   <div id="app">
-  <div id="music-header">{{ getName }}</div>
+    <div id="music-header">{{ getSongInfo.name }}</div>
     <audio src="###" style="display:none" id="audio"></audio>
-    <music-box :imgsrc="getImgSrc"></music-box>
-    <music-bar></music-bar>
-    <div id="back-img" :style="{'background-image':'url('+getImgSrc+')'}"></div>
-    <button @click="play">{{ state }}</button>
+    <music-box :songInfo="getSongInfo" :isplay="state"></music-box>
+    <music-bar @event-play="play" @event-change="changeMusic" @event-loop="changeLoop" :loop="loopType" :playState="state" :time="getTime"></music-bar>
+    <div id="back-img" :style="{'background-image':'url('+getSongInfo.al.picUrl+')'}"></div>
+    <div style="position:fixed;z-index:999;">
+      <p>state: {{ state }}</p>
+      <p>index: {{getIndex}}</p>
+      <p>currentTime: {{currentTime}}</p>
+      <p>duration: {{duration}}</p>
+      <p>loopType: {{loopType}}</p>
+    </div>
   </div>
 </template>
 
@@ -17,23 +23,42 @@ import musicBar from './components/musicBar'
 export default {
   name: 'app',
   mounted () {
+    this.timer = null;
     this.myAudio = document.querySelector('#audio');
+    // 当音乐播放时
     this.myAudio.onplay = ()=> {
+      this.timer = setInterval(()=>{
+        this.currentTime = this.myAudio.currentTime;
+      },500);
       this.state = 'play';
     };
+    // 当音乐暂停时
     this.myAudio.onpause = ()=> {
+      if(this.timer) clearInterval(this.timer);
       this.state = 'pause';
     };
+    // 当音乐缓冲时
     this.myAudio.onwaiting = ()=> {
       this.state = 'waite';
     };
+    // 当音乐缓冲完成时
     this.myAudio.onplaying = ()=> {
       this.myAudio.play();
       this.state = 'play';
     };
-    this.myAudio.onpended = ()=> {
+    // 当音乐元数据加载完成时
+    this.myAudio.onloadedmetadata = ()=> {
+      this.duration = this.myAudio.duration;
+    }
+    // 当音乐当前播放时间改变时
+    // this.myAudio.ontimeupdate = ()=> {
+    //   this.currentTime = this.myAudio.currentTime;
+    // };
+    // 当音乐播放结束时
+    this.myAudio.onended = ()=> {
       this.changeMusic();
     };
+    this.getSong();
   },
   data () {
     return {
@@ -42,13 +67,15 @@ export default {
       // 音乐索引
       index: 0,
       // 播放状态
-      state: 'play',
+      state: 'pause',
       // 循环模式(loop:列表循环；one:单曲循环；random:随机循环)
       loopType: 'loop',
       // 音量
       volum: 50,
       // 当前播放位置
       currentTime: 0,
+      // 当前音频总长度
+      duration: 1,
       // 初始音乐列表
       musicList: [
         {
@@ -91,16 +118,26 @@ export default {
   computed: {
     // 获取当前的播放序号
     getIndex () {
-      this.getSong();
       return this.index;
     },
-    // 获取封面图片
+    /*// 获取封面图片
     getImgSrc () {
       return this.musicList[this.index].al.picUrl;
     },
     // 获取歌曲名称
     getName () {
       return this.musicList[this.index].name;
+    },*/
+    // 获取歌曲信息
+    getSongInfo () {
+      return this.musicList[this.index];
+    },
+    //
+    getTime () {
+      return {
+        'current': Math.floor(this.currentTime),
+        'duration': Math.floor(this.duration)
+      }
     }
   },
   methods: {
@@ -116,10 +153,10 @@ export default {
     changeMusic (type) {
       let _index = 0;
       let leng = this.musicList.length;
-      if(type === -1){
+      if(type === 'prev'){
         _index = this.index-1;
         if(_index<0) _index = leng-1;
-      }else if(type === 1){
+      }else if(type === 'next'){
         _index = this.index +1;
         if(_index >= leng) _index = 0;
       }else {
@@ -134,13 +171,22 @@ export default {
         }
       }
       this.index = _index;
+      this.getSong();
+    },
+    // 更改循环模式
+    changeLoop () {
+      if(this.loopType === 'loop'){
+        this.loopType = 'random';
+      }else{
+        this.loopType = 'loop';
+      }
     },
     // 获取音乐
     getSong (id) {
       if( !(typeof id === 'number') ) id = this.musicList[this.index].id;
       let self = this;
       let url = 'https://api.imjad.cn/cloudmusic/?type=song&id='+id+'&br=128000';
-      axios.get('http://localhost:8081/proxy.php',{
+      axios.get(window.location.origin.replace(/[0-9]+$/,'8081')+'/proxy.php',{
           params:{ url: url }
         })
         .then(function (response) {
@@ -155,14 +201,15 @@ export default {
           }
         })
         .catch(function (error) {
-          console.log(error);
+          console.log(window.location.origin.replace(/[0-9]+$/,'8081')+'/proxy.php');
+          alert(error);
         });
     },
     // 获取音乐详情
     getDetail (id) {
       if( !(typeof id === 'number') ) id = this.musicList[this.index].id;
       let url = 'https://api.imjad.cn/cloudmusic/?type=detail&id='+id;
-      axios.get('http://localhost:8081/proxy.php',{
+      axios.get(window.location.origin.replace(/[0-9]+$/,'8081')+'/proxy.php',{
           params:{ url: url }
         })
         .then(function (response) {
@@ -176,7 +223,7 @@ export default {
     getMv (id) {
       if( !(typeof id === 'number') ) id = this.musicList[this.index].mv;
       let url = 'https://api.imjad.cn/cloudmusic/?type=mv&id='+id;
-      axios.get('http://localhost:8081/proxy.php',{
+      axios.get(window.location.origin.replace(/[0-9]+$/,'8081')+'/proxy.php',{
           params:{ url: url }
         })
         .then(function (response) {
@@ -190,7 +237,7 @@ export default {
     getComment (id) {
       if( !(typeof id === 'number') ) id = this.musicList[this.index].id;
       let url = 'https://api.imjad.cn/cloudmusic/?type=comments&id='+id;
-      axios.get('http://localhost:8081/proxy.php',{
+      axios.get(window.location.origin.replace(/[0-9]+$/,'8081')+'/proxy.php',{
           params:{ url: url }
         })
         .then(function (response) {
@@ -204,7 +251,7 @@ export default {
     getLyric (id) {
       if( !(typeof id === 'number') ) id = this.musicList[this.index].id;
       let url = 'https://api.imjad.cn/cloudmusic/?type=lyric&id='+id;
-      axios.get('http://localhost:8081/proxy.php',{
+      axios.get(window.location.origin.replace(/[0-9]+$/,'8081')+'/proxy.php',{
           params:{ url: url }
         })
         .then(function (response) {
@@ -221,7 +268,7 @@ export default {
 <style lang="scss">
 .flex-h {
   display: flex;
-  flex-flow: row nowrap;
+  flex-flow: row wrap;
 }
 .flex-v {
   display: flex;
@@ -240,14 +287,13 @@ export default {
   position: relative;
 }
 @mixin headerHeight($n: 1){
-  height: 45px*$n;
+  height: 80px*$n;
   font-size: 20px*$n;
+  line-height: 80px*$n;
 }
 #music-header {
   @include headerHeight();
   width: 100%;
-  box-shadow: 0 0 5px blue;
-  line-height: 1rem;
   text-align: center;
   overflow: hidden;
   white-space: nowrap;
@@ -255,12 +301,30 @@ export default {
   position: absolute;
   top: 0;
   z-index: 10;
+
+  &:after {
+    position: absolute;
+    bottom: 0;
+    content: '';
+    display: block;
+    width: 100%;
+    height: 1px;
+    background: linear-gradient( left, rgba(255,255,255,0), rgba(255,255,255,0.5), rgba(255,255,255,0) );
+  }
 }
 [data-dpr="2"] #music-header {
   @include headerHeight(2);
+
+  &:after {
+    height: 2px;
+  }
 }
 [data-dpr="3"] #music-header {
   @include headerHeight(3);
+
+  &:after {
+    height: 3px;
+  }
 }
 
 #back-img {
@@ -271,6 +335,18 @@ export default {
   bottom: -10px;
   right: -10px;
   background-size: cover;
-  filter: blur(8px);
+  filter: blur(10px);
+
+  &:after {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    content: '';
+    display: block;
+    background: black;
+    opacity: 0.4;
+  }
 }
 </style>

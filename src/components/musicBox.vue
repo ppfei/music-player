@@ -1,7 +1,14 @@
 <template>
   <div id="music-box">
-    <div class="song-icon"><img :src="imgsrc" alt="song-icon"></div>
-
+    <div class="song-icon"><img :class="{'play':isplay=='play'}" :src="songInfo.al.picUrl" alt="song-icon"></div>
+    <div class="song-info">
+      <ul class="flex-h">
+        <li class="song-ar"><i class="iconfont">&#xe6f4;</i> {{ songInfo.ar.name }}</li>
+        <li class="song-al"><i class="iconfont">&#xe6e4;</i> {{ songInfo.al.name }}</li>
+        <li class="song-com"><i class="iconfont">&#xe702;</i> 评论</li>
+        <li class="song-mv" v-show="songInfo.mv"><i class="iconfont">&#xe6ff;</i> MV</li>
+      </ul>
+    </div>
   </div>
 </template>
 
@@ -9,6 +16,8 @@
   export default {
     props: {
       imgsrc: String,
+      songInfo: Object,
+      isplay: String
     },
     data () {
       return {
@@ -19,61 +28,110 @@
 </script>
 
 <style lang="scss">
-  @mixin boxMargin($n: 1){
-    bottom: 100px*$n;
-    top: 45px*$n;
-  }
-  $songIconBottom: 200px;
+  $songIconBottom: 60px;
   $imgBorder: 3px;
+  $liFontSize: 14px;
+  
+  @mixin musicBox($n: 1){
+    bottom: 120px*$n;
+    top: 80px*$n;
+    .song-icon {
+      bottom: $songIconBottom*$n;
+      img {
+        border: $imgBorder*$n solid #eee;
+      }
+    }
+    .song-info {
+      height: $songIconBottom*$n;
+
+      ul {
+         li {
+           font-size: $liFontSize*$n;
+         }
+         .iconfont {
+            font-size: 22px*$n;
+            top: 3px*$n;
+         }
+      }
+    }
+  }
 
   #music-box {
     width: 100%;
     position: absolute;
     z-index: 10;
     left: 0;
-    background: red;
-    @include boxMargin();
+    @include musicBox();
 
     .song-icon {
       width: 100%;
       position: absolute;
       top: 0;
       left: 0;
-      bottom: $songIconBottom;
-      background: blue;
 
       img{
         width: 6rem;
         height: 6rem;
         border-radius: 50%;
         overflow: hidden;
-        background: lightgreen;
+        display: block;
         position: absolute;
         top: 0;
         left: 0;
         right: 0;
         bottom: 0;
         margin: auto;
-        border: $imgBorder solid #eee;
+        animation: imgRotate 30s linear infinite;
+        animation-play-state: paused;
+
+        &.play {
+          animation-play-state: running;
+        }
+      }
+    }
+    .song-info {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+
+      ul {
+        width: 100%;
+        height: 100%;
+        flex-flow: row nowrap;
+        overflow: hidden;
+         
+         li {
+           width: 1.5rem;
+           margin-left: 0.4rem;
+           overflow: hidden;
+           text-overflow: ellipsis;
+           white-space: nowrap;
+           cursor: pointer;
+         }
+         li.song-al, li.song-ar {
+           width: 2.6rem;
+         }
+         .iconfont {
+           position:relative;
+         }
       }
     }
   }
-  [data-dpr="2"] #music-box {
-    @include boxMargin(2);
-    .song-icon {
-      bottom: $songIconBottom*2;
-      img {
-        border: $imgBorder*2 solid #eee;
-      }
+
+  @keyframes imgRotate {
+    from {
+      transform: rotate(0deg);
     }
+    to {
+      transform: rotate(360deg);
+    }
+  }
+
+  [data-dpr="2"] #music-box {
+    @include musicBox(2);
+    
   }
   [data-dpr="3"] #music-box {
-    @include boxMargin(3);
-    .song-icon {
-      bottom: $songIconBottom*3;
-      img {
-        border: $imgBorder*3 solid #eee;
-      }
-    }
+    @include musicBox(3);
   }
 </style>
