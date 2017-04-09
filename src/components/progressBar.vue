@@ -1,7 +1,7 @@
 <template>
     <div id="progress-bar">
         <p class="progress-bg"></p>
-        <div class="progress-box" :style="{'width':pWidth}">
+        <div class="progress-box" :style="{'width':pWidth+'%'}">
             <p id="progress-icon" :class="playState"></p>
         </div>
     </div>
@@ -10,7 +10,7 @@
     export default {
         props: {
             pWidth: {
-                type: String,
+                type: Number,
                 default: '0'
             },
             playState: {
@@ -18,6 +18,54 @@
                 default: 'pause'
             }
         },
+        mounted() {
+            const self = this;
+            const oBar = document.querySelector('#progress-bar');
+            const oBox = document.querySelector('.progress-box');
+            oBar.onmousedown = function(evnet){
+                event.stopPropagation();
+                self.$emit('control',{type:'down'});
+                const w = oBar.clientWidth;
+                const left = oBar.getBoundingClientRect().left;
+                let x = event.offsetX;
+                oBox.style.width = x+'px';
+                document.onmousemove = ev =>{
+                    ev.stopPropagation();
+                    x = ev.pageX-left;
+                    x = Math.min(x, w);
+                    oBox.style.width = x+'px';
+                };
+                document.onmouseup = e =>{
+                    e.stopPropagation();
+                    x = e.pageX-left;
+                    x = Math.min(x, w);
+                    //oBox.style.width = x+'px';
+                    self.$emit('control',{type:'up',data:(x*100/w).toFixed(2)});
+                    //self.pWidth = (x*100/w).toFixed(2);
+                    document.onmouseup = document.onmousemove = null;
+                }
+            }
+            oBar.ontouchstart = function(event){
+                self.$emit('control',{type:'down'});
+                const w = oBar.clientWidth;
+                const left = oBar.getBoundingClientRect().left;
+                let x = event.targetTouches[0].offsetX;
+                oBox.style.width = x+'px';
+
+                document.ontouchmove = ev => {
+                    x = ev.targetTouches[0].pageX-left;
+                    x = Math.min(x, w);
+                    oBox.style.width = x+'px';
+                };
+                document.ontouchend = e =>{
+                    x = e.changedTouches[0].pageX-left;
+                    x = Math.min(x, w);
+                    self.$emit('control',{type:'up',data:(x*100/w).toFixed(2)});
+                    document.ontouchend = null;
+                };
+                return false;
+            }
+        }
     }
 </script>
 

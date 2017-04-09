@@ -1,13 +1,20 @@
 <template>
   <div id="app">
-    <div id="music-header">{{ getSongInfo.name }}</div>
+    <div id="music-header">{{ getSongInfo.name }}<i id="music-search" class="iconfont">&#xe6f1;</i></div>
     <audio src="###" style="display:none" id="audio"></audio>
     <music-box :songInfo="getSongInfo" :isplay="state"></music-box>
-    <music-bar @event-play="play" @event-change="changeMusic" @event-loop="changeLoop" :loop="loopType" :playState="state" :time="getTime"></music-bar>
+    <music-bar @event-play="play" @event-change="changeMusic" @event-loop="changeLoop" @event-control="eventControl" @event-showList="showList('show')" :loop="loopType" :playState="state" :time="getTime"></music-bar>
     <div id="back-img" :style="{'background-image':'url('+getSongInfo.al.picUrl+')'}"></div>
+    <!-- 歌曲列表 -->
+    <div id="music-list" :class="{'show': listIsShow=='show'}">
+        <div id="music-list-bg" @click="showList('hide')"></div>
+        <ul class="music-list-box">
+            <li class="flex-h" v-for="(item, index) of getMusicList"><p @click="changeMusicByIndex(index)">{{ item.name }}<em> - {{ item.ar.name }}</em></p><span @click="removeSong(index)">&times;</span></li>
+        </ul>
+    </div>
     <div style="position:fixed;z-index:999;">
       <p>state: {{ state }}</p>
-      <p>index: {{getIndex}}</p>
+      <p>index: {{index}}</p>
       <p>currentTime: {{currentTime}}</p>
       <p>duration: {{duration}}</p>
       <p>loopType: {{loopType}}</p>
@@ -49,11 +56,7 @@ export default {
     // 当音乐元数据加载完成时
     this.myAudio.onloadedmetadata = ()=> {
       this.duration = this.myAudio.duration;
-    }
-    // 当音乐当前播放时间改变时
-    // this.myAudio.ontimeupdate = ()=> {
-    //   this.currentTime = this.myAudio.currentTime;
-    // };
+    };
     // 当音乐播放结束时
     this.myAudio.onended = ()=> {
       this.changeMusic();
@@ -108,35 +111,34 @@ export default {
           mv: 125,
           br: 128000
         },
-      ]
+      ],
+      // list显示状态
+      listIsShow: 'hide',
+      searchList: []
     }
   },
   components: {
     musicBox,
-    musicBar
+    musicBar,
   },
   computed: {
-    // 获取当前的播放序号
-    getIndex () {
-      return this.index;
-    },
-    /*// 获取封面图片
-    getImgSrc () {
-      return this.musicList[this.index].al.picUrl;
-    },
-    // 获取歌曲名称
-    getName () {
-      return this.musicList[this.index].name;
-    },*/
     // 获取歌曲信息
     getSongInfo () {
       return this.musicList[this.index];
     },
-    //
+    // 获取歌曲时间
     getTime () {
       return {
         'current': Math.floor(this.currentTime),
         'duration': Math.floor(this.duration)
+      }
+    },
+    // 获取歌曲列表
+    getMusicList () {
+      if(this.musicList.length){
+        return this.musicList;
+      }else{
+        return []
       }
     }
   },
@@ -153,6 +155,7 @@ export default {
     changeMusic (type) {
       let _index = 0;
       let leng = this.musicList.length;
+      if(leng==0) return false;
       if(type === 'prev'){
         _index = this.index-1;
         if(_index<0) _index = leng-1;
@@ -171,6 +174,23 @@ export default {
         }
       }
       this.index = _index;
+      this.getSong();
+    },
+    // 通过索引切歌
+    changeMusicByIndex (_index) {
+      let leng = this.musicList.length;
+      if(leng==0) return false;
+      if(typeof _index ==='number'){
+        if(_index<0){
+          _index = 0;
+        }else if(_index>=leng){
+          _index = leng-1;
+        }
+      }else{
+        _index = 0;
+      }
+      this.index = _index;
+      //this.listIsShow = 'hide';
       this.getSong();
     },
     // 更改循环模式
@@ -201,7 +221,6 @@ export default {
           }
         })
         .catch(function (error) {
-          console.log(window.location.origin.replace(/[0-9]+$/,'8081')+'/proxy.php');
           alert(error);
         });
     },
@@ -260,93 +279,259 @@ export default {
         .catch(function (error) {
           console.log(error);
         });
+    },
+    // 进度条控制
+    eventControl (data) {
+      if(this.state==='play'){
+        if(data.type==='down'){
+          clearInterval(this.timer);
+        }
+        else if(data.type==='up'){
+          this.myAudio.currentTime = this.duration*data.data/100;
+          this.timer = setInterval(()=>{
+            this.currentTime = this.myAudio.currentTime;
+          },500);
+        }
+      }else{
+        if(data.type==='up') this.myAudio.currentTime = this.duration*data.data/100;
+      }
+    },
+    // 显示和隐藏歌曲列表
+    showList (str) {
+      if(str === 'show'){
+        this.listIsShow = 'show';
+      }else{
+        this.listIsShow = 'hide';
+      }
+    },
+    // 移除歌曲
+    removeSong (_index) {
+      let leng = this.musicList.length;
+      if(leng == 1){
+        this.index = 0;
+        alert('请保留一首歌曲');
+        return false;
+      }
+      this.musicList.splice(_index,1);
+      if(_index < this.index){
+        this.index --;
+      }else if(_index == this.index){
+        _index --;
+        if(_index<0) _index = 0;
+        this.index = _index;
+        this.getSong();
+      }
+    },
+    // 搜索歌曲
+    searchSong (str) {
+      this.searchList = [];
+      if( str == '' ) return;
+      let url = 'https://api.imjad.cn/cloudmusic/?type=search&s='+id;
+      axios.get(window.location.origin.replace(/[0-9]+$/,'8081')+'/proxy.php',{
+          params:{ url: url }
+        })
+        .then(function (response) {
+          console.log(response.data);
+        })
+        .catch(function (error) {
+          console.log(error);
+        });
     }
   }
 }
 </script>
 
 <style lang="scss">
-.flex-h {
-  display: flex;
-  flex-flow: row wrap;
-}
-.flex-v {
-  display: flex;
-  flex-flow: column nowrap;
-}
-#app {
-  font-family: 'Avenir', Helvetica, Arial, sans-serif;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-  color: #fff;
-  margin: 0 auto;
-  box-shadow: 0 0 10px red inset;
-  width: 100%;
-  height: 100%;
-  overflow: hidden;
-  position: relative;
-}
-@mixin headerHeight($n: 1){
-  height: 80px*$n;
-  font-size: 20px*$n;
-  line-height: 80px*$n;
-}
-#music-header {
-  @include headerHeight();
-  width: 100%;
-  text-align: center;
-  overflow: hidden;
-  white-space: nowrap;
-  text-overflow: ellipsis;
-  position: absolute;
-  top: 0;
-  z-index: 10;
-
-  &:after {
-    position: absolute;
-    bottom: 0;
-    content: '';
-    display: block;
-    width: 100%;
-    height: 1px;
-    background: linear-gradient( left, rgba(255,255,255,0), rgba(255,255,255,0.5), rgba(255,255,255,0) );
+  .flex-h {
+    display: flex;
+    flex-flow: row wrap;
   }
-}
-[data-dpr="2"] #music-header {
-  @include headerHeight(2);
-
-  &:after {
-    height: 2px;
+  .flex-v {
+    display: flex;
+    flex-flow: column nowrap;
   }
-}
-[data-dpr="3"] #music-header {
-  @include headerHeight(3);
-
-  &:after {
-    height: 3px;
-  }
-}
-
-#back-img {
-  position: absolute;
-  z-index: 1;
-  top: -10px;
-  left: -10px;
-  bottom: -10px;
-  right: -10px;
-  background-size: cover;
-  filter: blur(10px);
-
-  &:after {
-    position: absolute;
-    left: 0;
-    top: 0;
-    width: 100%;
+  #app {
+    font-family: 'Avenir', Helvetica, Arial, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    color: #fff;
+    margin: 0 auto;
+    box-shadow: 0 0 10px red inset;
+    width: 10rem;
     height: 100%;
-    content: '';
-    display: block;
-    background: black;
-    opacity: 0.4;
+    overflow: hidden;
+    position: relative;
   }
-}
+  @mixin headerHeight($n: 1){
+    height: 80px*$n;
+    font-size: 20px*$n;
+    line-height: 80px*$n;
+
+    #music-search {
+      width: 40px*$n;
+      height: 40px*$n;
+      line-height: 40px*$n;
+      font-size: 30px*$n;
+      top: 20px*$n;
+      right: 10px*$n;
+    }
+  }
+  #music-header {
+    @include headerHeight();
+    width: 100%;
+    text-align: center;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    position: absolute;
+    top: 0;
+    z-index: 10;
+
+    #music-search {
+      display: block;
+      position: absolute;
+      text-align: center;
+      cursor: pointer;
+    }
+
+    &:after {
+      position: absolute;
+      bottom: 0;
+      content: '';
+      display: block;
+      width: 100%;
+      height: 1px;
+      background: linear-gradient( left, rgba(255,255,255,0), rgba(255,255,255,0.3), rgba(255,255,255,0) );
+    }
+  }
+  [data-dpr="2"] #music-header {
+    @include headerHeight(2);
+
+    &:after {
+      height: 2px;
+    }
+  }
+  [data-dpr="3"] #music-header {
+    @include headerHeight(3);
+
+    &:after {
+      height: 3px;
+    }
+  }
+
+  #back-img {
+    position: absolute;
+    z-index: 1;
+    top: -0.5rem;
+    left: -0.5rem;
+    bottom: -0.5rem;
+    right: -0.5rem;
+    background-size: cover;
+    filter: blur(10px);
+
+    &:after {
+      position: absolute;
+      left: 0;
+      top: 0;
+      width: 100%;
+      height: 100%;
+      content: '';
+      display: block;
+      background: black;
+      opacity: 0.4;
+    }
+  }
+
+  /* 歌曲列表 */
+  @mixin musicList($n: 1){
+    .music-list-box {
+      border-width: 2px*$n;
+      padding: 10px*$n 0;
+      font-size: 14px*$n;
+
+      li {
+        height: 40px*$n;
+        line-height: 40px*$n;
+        padding: 0 20px*$n;
+
+        em {
+          font-size: 12px*$n;
+        }
+        span {
+          width: 40px*$n;
+          height: 40px*$n;
+          right: 10px*$n;
+          font-size: 20px*$n;
+        }
+      }
+    }
+  }
+  #music-list{
+      width: 100%;
+      height: 100%;
+      position: absolute;
+      bottom: -100%;
+      left: 0;
+      z-index: 20;
+      color: #333;
+      @include musicList;
+
+      .music-list-box {
+          width: 100%;
+          height: 60%;
+          background: #fff;
+          position: absolute;
+          bottom: -100%;
+          left: 0;
+          overflow: hidden;
+          border-top: 2px solid #f66;
+          box-shadow: 0 0 10px #333;
+          transition: bottom .3s ease-out;
+
+          li {
+            position: relative;
+            border-bottom: 1px solid #efefef;
+
+            p {
+              width: 100%;
+              height: 100%;
+              overflow: hidden;
+            }
+            em {
+              color: #aaa;
+            }
+            span {
+              position: absolute;
+              text-align: center;
+              color: red;
+              top: 0;
+              background: #fff;
+              cursor: pointer;
+            }
+          }
+      }
+  }
+  #music-list.show {
+    bottom: 0;
+
+    .music-list-box {
+      bottom: 0;
+    }
+    #music-list-bg {
+      opacity: 1;
+    }
+  }
+  #music-list-bg {
+      width: 100%;
+      height: 100%;
+      background: rgba(0,0,0,.4);
+      opacity: 0;
+      transition: opacity 0.3s;
+  }
+  [data-dpr="2"] #music-list {
+    @include musicList(2);
+  }
+  [data-dpr="3"] #music-list {
+    @include musicList(3);
+  }
 </style>

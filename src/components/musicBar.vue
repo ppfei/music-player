@@ -3,7 +3,7 @@
         <div class="bar-top flex-h">
             <p class="currentTime" v-text="convertTime(time.current)">00:00</p>
             <div id="progress">
-                <progress-bar :pWidth="getProgressWidth" :playState="playState"></progress-bar>
+                <progress-bar :pWidth="getProgressWidth" :playState="playState" @control="control"></progress-bar>
             </div>
             <p class="durationTime" v-text="convertTime(time.duration)">00:00</p>
         </div>
@@ -12,7 +12,7 @@
             <div id="control-prev" class="icon"><i class="iconfont" @click="prev">&#xe706;</i></div>
             <div id="control-play" class="icon"><i class="iconfont" @click="play" v-html="controlPlay[playState]"></i></div>
             <div id="control-next" class="icon"><i class="iconfont" @click="next">&#xe706;</i></div>
-            <div id="songList" class="icon"><i class="iconfont">&#xe6ec;</i></div>
+            <div id="songList" class="icon"><i class="iconfont" @click="showList">&#xe6ec;</i></div>
         </div>
     </div>
 </template>
@@ -59,7 +59,7 @@
                 if(typeof d !== 'number' || d == 0) d = 1;
                 let percent = (c*100/d).toFixed(2);
                 percent = Math.min(percent, 100);
-                return percent+'%';
+                return percent;
             }
         },
         methods: {
@@ -87,6 +87,14 @@
                 let s = Math.floor(num%60);
                 s = s<10 ? '0'+s : ''+s;
                 return m+':'+s;
+            },
+            //
+            control (data) {
+                this.$emit('event-control',data);
+            },
+            //  显示列表
+            showList () {
+                this.$emit('event-showList');
             }
         }
     }
