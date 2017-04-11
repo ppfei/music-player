@@ -1,24 +1,28 @@
 <template>
   <div id="app">
-    <div id="music-header">{{ getSongInfo.name }}<i id="music-search" class="iconfont">&#xe6f1;</i></div>
+    <div id="music-header">{{ getSongInfo.name }}<i class="music-search-btn iconfont" @click="searchIsShow=true">&#xe6f1;</i></div>
     <audio src="###" style="display:none" id="audio"></audio>
     <music-box :songInfo="getSongInfo" :isplay="state"></music-box>
     <music-bar @event-play="play" @event-change="changeMusic" @event-loop="changeLoop" @event-control="eventControl" @event-showList="showList('show')" :loop="loopType" :playState="state" :time="getTime"></music-bar>
     <div id="back-img" :style="{'background-image':'url('+getSongInfo.al.picUrl+')'}"></div>
     <!-- 歌曲列表 -->
     <div id="music-list" :class="{'show': listIsShow=='show'}">
-        <div id="music-list-bg" @click="showList('hide')"></div>
-        <ul class="music-list-box">
-            <li class="flex-h" v-for="(item, index) of getMusicList"><p @click="changeMusicByIndex(index)">{{ item.name }}<em> - {{ item.ar.name }}</em></p><span @click="removeSong(index)">&times;</span></li>
-        </ul>
+      <div id="music-list-bg" @click="showList('hide')"></div>
+      <ul class="music-list-box">
+        <li class="flex-h" v-for="(item, index) of getMusicList"><p @click="changeMusicByIndex(index)">{{ item.name }}<em> - {{ item.ar.name }}</em></p><span @click="removeSong(index)">&times;</span></li>
+      </ul>
     </div>
-    <div style="position:fixed;z-index:999;">
+    <!-- 搜索和详情 -->
+    <transition name="search-fade">
+      <music-search :musicList="getMusicList" v-show="searchIsShow" @event-closeSearch="closeSearch" @event-addSong="addSong"></music-search>
+    </transition>
+    <!--<div class="info" style="position:fixed;z-index:999;">
       <p>state: {{ state }}</p>
       <p>index: {{index}}</p>
       <p>currentTime: {{currentTime}}</p>
       <p>duration: {{duration}}</p>
       <p>loopType: {{loopType}}</p>
-    </div>
+    </div>-->
   </div>
 </template>
 
@@ -26,6 +30,8 @@
 import axios from 'axios'
 import musicBox from './components/musicBox'
 import musicBar from './components/musicBar'
+import moreDes from './components/moreDes'
+import musicSearch from './components/musicSearch'
 
 export default {
   name: 'app',
@@ -93,33 +99,62 @@ export default {
             id: 3684,
             name: '林俊杰',
           },
-          mv: 125,
-          br: 128000
+          mv: 125
         },
         {
-          id: 25727804,
-          name: '修炼爱情',
+          id: 368727,
+          name: '明天，你好',
           al: {
-            id: 2301158,
-            name: '因你而在',
-            picUrl: 'https://p3.music.126.net/6miaRW-_QT81R-gsj4MCLg==/4431031859953290.jpg',
+            id: 36520,
+            name: '去寻找',
+            picUrl: 'https://p4.music.126.net/LQ2iUKlZwqGMysGkeCR4ww==/27487790697969.jpg',
           },
           ar: {
-            id: 3684,
-            name: '林俊杰',
+            id: 12437,
+            name: '牛奶咖啡',
           },
-          mv: 125,
-          br: 128000
+          mv: 480070
         },
+        {
+          id: 28661564,
+          name: 'Maps',
+          al: {
+            id: 2866276,
+            name: 'Maps',
+            picUrl: 'https://p3.music.126.net/OC3XXrblVQPgXrkZyLaPow==/3394192437682072.jpg',
+          },
+          ar: {
+            id: 96266,
+            name: 'Maroon 5',
+          },
+          mv: 285043
+        },
+        {
+          id: 418603077,
+          name: '告白气球',
+          al: {
+            id: 34720827,
+            name: '周杰伦的床边故事',
+            picUrl: 'https://p4.music.126.net/cUTk0ewrQtYGP2YpPZoUng==/3265549553028224.jpg',
+          },
+          ar: {
+            id: 6452,
+            name: '周杰伦',
+          },
+          mv: 5382080
+        }
       ],
       // list显示状态
       listIsShow: 'hide',
-      searchList: []
+      // 搜索页显示状态
+      searchIsShow: false,
     }
   },
   components: {
     musicBox,
     musicBar,
+    moreDes,
+    musicSearch
   },
   computed: {
     // 获取歌曲信息
@@ -156,19 +191,17 @@ export default {
       let _index = 0;
       let leng = this.musicList.length;
       if(leng==0) return false;
-      if(type === 'prev'){
-        _index = this.index-1;
-        if(_index<0) _index = leng-1;
-      }else if(type === 'next'){
-        _index = this.index +1;
-        if(_index >= leng) _index = 0;
+
+      if(this.loopType === 'random'){
+        _index = Math.floor(Math.random()*leng);
+      }else if(this.loopType === 'one'){
+        this.myAudio.play();
+        return false;
       }else {
-        if(this.loopType === 'random'){
-          _index = Math.floor(Math.random()*leng);
-        }else if(this.loopType === 'one'){
-          this.myAudio.play();
-          return false;
-        }else {
+        if(type === 'prev'){
+          _index = this.index-1;
+          if(_index<0) _index = leng-1;
+        }else{
           _index = this.index +1;
           if(_index >= leng) _index = 0;
         }
@@ -322,20 +355,18 @@ export default {
         this.getSong();
       }
     },
-    // 搜索歌曲
-    searchSong (str) {
-      this.searchList = [];
-      if( str == '' ) return;
-      let url = 'https://api.imjad.cn/cloudmusic/?type=search&s='+id;
-      axios.get(window.location.origin.replace(/[0-9]+$/,'8081')+'/proxy.php',{
-          params:{ url: url }
-        })
-        .then(function (response) {
-          console.log(response.data);
-        })
-        .catch(function (error) {
-          console.log(error);
-        });
+    // 关闭搜索页
+    closeSearch () {
+      this.searchIsShow = false;
+    },
+    // 添加歌曲到列表
+    addSong (data){
+      if(!data) return;
+      let test = this.musicList.some(value=>{
+        return value.id == data.id;
+      });
+      if(test) return;
+      this.musicList.push(data);
     }
   }
 }
@@ -361,13 +392,19 @@ export default {
     height: 100%;
     overflow: hidden;
     position: relative;
+    .search-fade-enter-active, .search-fade-leave-active {
+      transition: opacity 0.3s;
+    }
+    .search-fade-enter, .search-fade-leave-active {
+      opacity: 0;
+    }
   }
   @mixin headerHeight($n: 1){
     height: 80px*$n;
     font-size: 20px*$n;
     line-height: 80px*$n;
 
-    #music-search {
+    .music-search-btn {
       width: 40px*$n;
       height: 40px*$n;
       line-height: 40px*$n;
@@ -387,7 +424,7 @@ export default {
     top: 0;
     z-index: 10;
 
-    #music-search {
+    .music-search-btn {
       display: block;
       position: absolute;
       text-align: center;
@@ -483,7 +520,7 @@ export default {
           position: absolute;
           bottom: -100%;
           left: 0;
-          overflow: hidden;
+          overflow-y: auto;
           border-top: 2px solid #f66;
           box-shadow: 0 0 10px #333;
           transition: bottom .3s ease-out;
