@@ -1,16 +1,21 @@
 <template>
-    <div id="music-search">
-        <div class="music-search-header">
+    <div id="music-artist">
+        <div class="music-header">
             <span class="back" @click="close">&times;</span>
-            <input type="search" v-model="searchStr" id="search" placeholder="搜索歌曲">
-            <label for="search"><i class="iconfont">&#xe6f1;</i></label>
+            <b class="title">歌手: {{ artist.name }}</b>
         </div>
-        <div class="music-search-body">
-            <ul class="music-search-list">
+        <div class="music-body">
+            <div class="music-des">
+                <img :src="artist.picUrl" :alt="artist.name">
+                <div class="des-box">
+                    <p class="des-title">{{ artist.name }}</p>
+                    <p class="des-info">{{ artist.briefDesc }}</p>
+                </div>
+            </div>
+            <ul class="music-list">
                 <li class="flex-h" v-for="(item, index) of searchList" :class="{'check': isCheck(item)}"><p @click="addAndChangeMusic(item)">{{ item.name }}<em> - {{ item.ar.name }}</em></p><span @click="addSong(item)">+</span></li>
             </ul>
         </div>
-        <div class="search-result">{{ searchStr }} : {{ getStr }}</div>
     </div>
 </template>
 
@@ -21,44 +26,50 @@
             musicList: {
                 type: Array,
                 default: []
+            },
+            activeMusic: {
+                type: Object,
+                default: {
+                    id: 0,
+                    name: '',
+                    al: {
+                        id: 0,
+                        name: '',
+                        picUrl: '',
+                    },
+                    ar: {
+                        id: 0,
+                        name: ''
+                    },
+                    mv: 0
+                }
             }
         },
         data () {
             return {
-                searchList: [
-                    {
-                        name:'xxx',
-                        ar:{
-                            name:'xxx'
-                        }
-                    }
-                ],
-                searchStr: '',
+                searchList: [],
+                artistId: 0,
+                artist: {
+                    id: 0,
+                    name: '',
+                    picUrl: '',
+                    briefDesc: ''
+                }
             }
         },
-        computed: {
-            getStr (){
-                this.searchStr = this.searchStr.trim();
-                if(this.searchTimer) clearTimeout(this.searchTimer);
-                if(this.searchStr == ''){
-                    this.searchList = [];
-                    return false;
-                }
-                this.searchTimer = setTimeout(()=>{
-                    this.searchSong(this.searchStr);
-                },300);
-                return true;
-            } 
-        },
         methods: {
+            beforeShow () {
+                if(this.artistId == this.activeMusic.ar.id) return;
+                this.artistId = this.activeMusic.ar.id;
+                this.getArtist(this.artistId);
+            },
             close () {
                 this.$emit('event-closePage');
             },
-            // 搜索歌曲
-            searchSong (str) {
+            // 歌手详情
+            getArtist (id) {
                 let self = this;
-                if( str == '' ) return;
-                let url = 'https://api.imjad.cn/cloudmusic/?type=search&s='+str;
+                let url = 'https://api.imjad.cn/cloudmusic/?type=artist&id='+id;
                 axios.get(window.location.origin.replace(/[0-9]+$/,'8081')+'/proxy.php',{
                         params:{ url: url }
                     })
@@ -68,8 +79,15 @@
                             console.log('搜索失败');
                             return false;
                         };
-                        if(!response.data.result.songCount) return false;
-                        response.data.result.songs.forEach((value,index)=>{
+                        let data = response.data;
+                        self.artist = {
+                            'id': data.artist.id,
+                            'name': data.artist.name,
+                            'picUrl': data.artist.picUrl,
+                            'briefDesc': data.artist.briefDesc
+                        };
+                        self.searchList = [];
+                        data.hotSongs.forEach((value,index)=>{
                             let result = {
                                 'id': value.id,
                                 'name': value.name,
@@ -118,9 +136,9 @@
 </script>
 
 <style lang="scss">
-    @mixin musicSearch ($n:1){
+    @mixin musicArtist ($n:1){
         font-size: 16px*$n;
-        .music-search-header {
+        .music-header {
             height: 45px*$n;
             line-height: 45px*$n;
 
@@ -128,24 +146,38 @@
                 padding: 0 20px*$n;
                 font-size: 20px*$n;
             }
-            #search {
-                padding: 0 10px*$n;
-            }
-            label {
-                padding: 0 20px*$n;
-                .iconfont {
-                    font-size: 22px*$n;
-                }
+            b {
+                font-size: 18px*$n;
+                margin-left: -50px*$n;
             }
         }
-        .music-search-body {
-            padding: 45px*$n 0 0 0;
+        .music-body {
+            padding: 45px*$n 20px*$n 0;
             margin-top: -45px*$n;
-            .music-search-list {
+            .music-des {
+                height: 120px*$n;
+                padding: 10px*$n 0;
+                img {
+                    height: 120px*$n;
+                    margin-right: 10px*$n;
+                }
+                .des-box {
+                    height: 120px*$n;
+                    line-height: 20px*$n;
+                    font-size: 12px*$n;
+                    .des-title {
+                        height: 20px*$n;
+                        font-size: 16px*$n;
+                    }
+                    .des-info {
+                        height: 100px*$n;
+                    }
+                }
+            }
+            .music-list {
                 li {
                     height: 40px*$n;
                     line-height: 40px*$n;
-                    padding: 0 20px*$n;
 
                     em {
                         font-size: 12px*$n;
@@ -153,7 +185,6 @@
                     span {
                         width: 40px*$n;
                         height: 40px*$n;
-                        right: 10px*$n;
                         font-size: 20px*$n;
                     }
                 }
@@ -161,7 +192,7 @@
         }
     }
 
-    #music-search {
+    #music-artist {
         width: 100%;
         height: 100%;
         position: absolute;
@@ -171,14 +202,16 @@
         color: #333;
         background: #fff;
 
-        @include musicSearch;
+        @include musicArtist;
 
-        .music-search-header {
+        .music-header {
             width: 100%;
             position: relative;
+            z-index: 20;
             text-align: center;
             overflow: hidden;
             border-bottom: 1px solid #eee;
+            background: #fff;
 
             .back {
                 font-family: 'Microsoft Yahei';
@@ -186,31 +219,29 @@
                 cursor: pointer;
                 color: red;
             }
-            #search {
-                width: 70%;
-                height: 70%;
-                border: none;
-                outline: none;
-                border-bottom: 1px solid transparent;
-                transition: border-color 0.3s linear;
-                
-                &:focus {
-                    border-color: #aaa;
-                }
-            }
-            label {
-                float: right;
-                cursor: pointer;
-            }
         }
-        .music-search-body {
+        .music-body {
             width: 100%;
             box-sizing: border-box;
             height: 100%;
-            .music-search-list {
+            overflow-y: auto;
+            .music-des {
+                width: 100%;
+                img {
+                    width: auto;
+                    float: left;
+                }
+                .des-box {
+                    overflow: hidden;
+                    .des-info {
+                        color: #888;
+                        overflow-y: auto;
+                    }
+                }
+            }
+            .music-list {
                 width: 100%;
                 height: 100%;
-                overflow-y: auto;
 
                 li {
                     position: relative;
@@ -235,22 +266,23 @@
                         text-align: center;
                         color: #999;
                         top: 0;
+                        right: 0;
                         background: #fff;
                         cursor: pointer;
                     }
                 }
             }
         }
-        .search-result {
+        .music-result {
             position: absolute;
             left: -100%;
             top: -100%;
         }
     }
-    [data-dpr="2"] #music-search {
-        @include musicSearch(2);
+    [data-dpr="2"] #music-artist {
+        @include musicArtist(2);
     }
-    [data-dpr="3"] #music-search {
-        @include musicSearch(3);
+    [data-dpr="3"] #music-artist {
+        @include musicArtist(3);
     }
 </style>

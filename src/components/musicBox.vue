@@ -3,10 +3,10 @@
     <div class="song-icon"><img :class="{'play':isplay=='play'}" :src="songInfo.al.picUrl" alt="song-icon"></div>
     <div class="song-info">
       <ul class="flex-h">
-        <li class="song-ar"><i class="iconfont">&#xe6f4;</i> {{ songInfo.ar.name }}</li>
-        <li class="song-al"><i class="iconfont">&#xe6e4;</i> {{ songInfo.al.name }}</li>
-        <li class="song-com"><i class="iconfont">&#xe702;</i> 评论</li>
-        <li class="song-mv" v-show="songInfo.mv"><i class="iconfont">&#xe6ff;</i> MV</li>
+        <li class="song-ar" @click="showPage('artistIsShow')"><i class="iconfont">&#xe6f4;</i> {{ songInfo.ar.name }}</li>
+        <li class="song-al" @click="showPage('albumIsShow')"><i class="iconfont">&#xe6e4;</i> {{ songInfo.al.name }}</li>
+        <li class="song-com" @click="showPage('commentIsShow')"><i class="iconfont">&#xe702;</i> 评论</li>
+        <li class="song-mv" v-show="songInfo.mv" @click="showPage('mvIsShow')"><i class="iconfont">&#xe6ff;</i> MV</li>
       </ul>
     </div>
   </div>
@@ -22,6 +22,11 @@
     data () {
       return {
         
+      }
+    },
+    methods: {
+      showPage (str) {
+        this.$emit('event-showPage', str);
       }
     }
   }

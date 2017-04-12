@@ -2,7 +2,7 @@
   <div id="app">
     <div id="music-header">{{ getSongInfo.name }}<i class="music-search-btn iconfont" @click="searchIsShow=true">&#xe6f1;</i></div>
     <audio src="###" style="display:none" id="audio"></audio>
-    <music-box :songInfo="getSongInfo" :isplay="state"></music-box>
+    <music-box :songInfo="getSongInfo" :isplay="state" @event-showPage="showPage"></music-box>
     <music-bar @event-play="play" @event-change="changeMusic" @event-loop="changeLoop" @event-control="eventControl" @event-showList="showList('show')" :loop="loopType" :playState="state" :time="getTime"></music-bar>
     <div id="back-img" :style="{'background-image':'url('+getSongInfo.al.picUrl+')'}"></div>
     <!-- 歌曲列表 -->
@@ -13,8 +13,20 @@
       </ul>
     </div>
     <!-- 搜索和详情 -->
-    <transition name="search-fade">
-      <music-search :musicList="getMusicList" v-show="searchIsShow" @event-closeSearch="closeSearch" @event-addSong="addSong"></music-search>
+    <transition name="page-fade">
+      <music-search :musicList="getMusicList" v-show="searchIsShow" @event-closePage="closePage('searchIsShow')" @event-addSong="addSong" @event-changeMusic="changeMusicByIndex"></music-search>
+    </transition>
+    <transition name="page-fade">
+      <music-artist ref="artistIsShow" :musicList="getMusicList" :activeMusic="getSongInfo" v-show="artistIsShow" @event-closePage="closePage('artistIsShow')" @event-addSong="addSong" @event-changeMusic="changeMusicByIndex"></music-artist>
+    </transition>
+    <transition name="page-fade">
+      <music-album ref="albumIsShow" :musicList="getMusicList" :activeMusic="getSongInfo" v-show="albumIsShow" @event-closePage="closePage('albumIsShow')" @event-addSong="addSong" @event-changeMusic="changeMusicByIndex"></music-album>
+    </transition>
+    <transition name="page-fade">
+      <music-comment ref="commentIsShow" :activeMusic="getSongInfo" v-show="commentIsShow" @event-closePage="closePage('commentIsShow')"></music-comment>
+    </transition>
+    <transition name="page-fade">
+      <music-mv ref="mvIsShow" :musicList="getMusicList" :activeMusic="getSongInfo" v-show="mvIsShow" @event-closePage="closePage('mvIsShow')" @event-addSong="addSong" @event-changeMusic="changeMusicByIndex"></music-mv>
     </transition>
     <!--<div class="info" style="position:fixed;z-index:999;">
       <p>state: {{ state }}</p>
@@ -30,8 +42,11 @@
 import axios from 'axios'
 import musicBox from './components/musicBox'
 import musicBar from './components/musicBar'
-import moreDes from './components/moreDes'
 import musicSearch from './components/musicSearch'
+import musicArtist from './components/musicArtist'
+import musicAlbum from './components/musicAlbum'
+import musicComment from './components/musicComment'
+import musicMv from './components/musicMv'
 
 export default {
   name: 'app',
@@ -65,7 +80,7 @@ export default {
     };
     // 当音乐播放结束时
     this.myAudio.onended = ()=> {
-      this.changeMusic();
+      this.changeMusic('next');
     };
     this.getSong();
   },
@@ -148,13 +163,24 @@ export default {
       listIsShow: 'hide',
       // 搜索页显示状态
       searchIsShow: false,
+      // 歌手页显示状态
+      artistIsShow: false,
+      // 专辑页显示状态
+      albumIsShow: false,
+      // 评论页显示状态
+      commentIsShow: false,
+      // mv页显示状态
+      mvIsShow: false,
     }
   },
   components: {
     musicBox,
     musicBar,
-    moreDes,
-    musicSearch
+    musicSearch,
+    musicArtist,
+    musicAlbum,
+    musicComment,
+    musicMv
   },
   computed: {
     // 获取歌曲信息
@@ -257,20 +283,6 @@ export default {
           alert(error);
         });
     },
-    // 获取音乐详情
-    getDetail (id) {
-      if( !(typeof id === 'number') ) id = this.musicList[this.index].id;
-      let url = 'https://api.imjad.cn/cloudmusic/?type=detail&id='+id;
-      axios.get(window.location.origin.replace(/[0-9]+$/,'8081')+'/proxy.php',{
-          params:{ url: url }
-        })
-        .then(function (response) {
-          console.log(response.data);
-        })
-        .catch(function (error) {
-          console.log(error);
-        });
-    },
     // 获取MV
     getMv (id) {
       if( !(typeof id === 'number') ) id = this.musicList[this.index].mv;
@@ -355,9 +367,16 @@ export default {
         this.getSong();
       }
     },
-    // 关闭搜索页
-    closeSearch () {
-      this.searchIsShow = false;
+    // 显示页面
+    showPage (str) {
+      if(!str) return;
+      this[str] = true;
+      this.$refs[str].beforeShow();
+    },
+    // 关闭页
+    closePage (str) {
+      if(!str) return;
+      this[str] = false;
     },
     // 添加歌曲到列表
     addSong (data){
@@ -392,10 +411,10 @@ export default {
     height: 100%;
     overflow: hidden;
     position: relative;
-    .search-fade-enter-active, .search-fade-leave-active {
+    .page-fade-enter-active, .page-fade-leave-active {
       transition: opacity 0.3s;
     }
-    .search-fade-enter, .search-fade-leave-active {
+    .page-fade-enter, .page-fade-leave-active {
       opacity: 0;
     }
   }
@@ -464,6 +483,7 @@ export default {
     bottom: -0.5rem;
     right: -0.5rem;
     background-size: cover;
+    background-position: center center;
     filter: blur(10px);
 
     &:after {
