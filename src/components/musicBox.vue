@@ -6,7 +6,6 @@
         <li class="song-ar" @click="showPage('artistIsShow')"><i class="iconfont">&#xe6f4;</i> {{ songInfo.ar.name }}</li>
         <li class="song-al" @click="showPage('albumIsShow')"><i class="iconfont">&#xe6e4;</i> {{ songInfo.al.name }}</li>
         <li class="song-com" @click="showPage('commentIsShow')"><i class="iconfont">&#xe702;</i> 评论</li>
-        <li class="song-mv" v-show="songInfo.mv" @click="showPage('mvIsShow')"><i class="iconfont">&#xe6ff;</i> MV</li>
       </ul>
     </div>
   </div>
@@ -103,18 +102,18 @@
         width: 100%;
         height: 100%;
         flex-flow: row nowrap;
+        text-align: center;
         overflow: hidden;
          
          li {
-           width: 1.5rem;
-           margin-left: 0.4rem;
+           width: 3rem;
            overflow: hidden;
            text-overflow: ellipsis;
            white-space: nowrap;
            cursor: pointer;
          }
          li.song-al, li.song-ar {
-           width: 2.6rem;
+           width: 3.5rem;
          }
          .iconfont {
            position:relative;

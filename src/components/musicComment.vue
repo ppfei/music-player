@@ -2,19 +2,19 @@
     <div id="music-comment">
         <div class="music-header">
             <span class="back" @click="close">&times;</span>
-            <b class="title">歌曲: {{ activeMusic.name }}</b>
+            <b class="title">歌曲: {{ staticMusic.name }}</b>
         </div>
         <div class="music-body">
             <div class="music-des">
-                <img :src="getActiveMusic().al.picUrl" :alt="getActiveMusic().name">
+                <img :src="staticMusic.al.picUrl" :alt="staticMusic.name">
                 <div class="des-box">
-                    <p class="des-title">{{ getActiveMusic().name }}</p>
-                    <p class="des-info">{{ getActiveMusic().ar.name }}</p>
+                    <p class="des-title">{{ staticMusic.name }}</p>
+                    <p class="des-info">{{ staticMusic.ar.name }}</p>
                 </div>
             </div>
             <h3>精彩评论</h3>
             <ul class="comment-list">
-                <li class="flex" v-for="(item, index) of hotComments">
+                <li v-for="(item, index) of hotComments">
                     <img class="userImg" :src="item.user.avatarUrl">
                     <div class="comment-box">
                         <div class="comment-header">
@@ -51,11 +51,15 @@
                 </li>
             </ul>
         </div>
+        <transition name="fade-out">
+            <loading v-if="isLoading"></loading>
+        </transition>
     </div>
 </template>
 
 <script>
     import axios from 'axios'
+    import loading from './loading'
     export default {
         props:{
             activeMusic: {
@@ -75,6 +79,9 @@
                     mv: 0
                 }
             }
+        },
+        components: {
+            loading
         },
         data () {
             return {
@@ -99,32 +106,65 @@
                 }],
                 hotComments: [],
                 commentId: 0,
+                staticMusic: {
+                    id: 0,
+                    name: '',
+                    al: {
+                        id: 0,
+                        name: '',
+                        picUrl: '',
+                    },
+                    ar: {
+                        id: 0,
+                        name: ''
+                    },
+                    mv: 0
+                },
+                isLoading: true
             }
         },
         methods: {
             beforeShow () {
                 if(this.commentId == this.activeMusic.id) return;
+                this.staticMusic = this.activeMusic;
                 this.commentId = this.activeMusic.id;
                 this.getComment(this.commentId);
             },
             close () {
                 this.$emit('event-closePage');
             },
-            getActiveMusic () {
-                return this.activeMusic;
-            },
             toTime (time) {
+                let timeStr = '--';
                 if(!time) return '--';
                 let date = new Date(time);
-                let y = date.getFullYear(),
-                    m = date.getMonth()+1,
-                    d = date.getDay();
-                m = m<9 ? '0'+m : m;
-                d = d<9 ? '0'+d : d;
-                return y+'年'+m+'月'+d+'日';
+                let yyyy = date.getFullYear(),
+                    MM = date.getMonth()+1,
+                    dd = date.getDate(),
+                    HH = date.getHours(),
+                    mm = date.getMinutes(),
+                    ss = date.getSeconds();
+                MM = MM<9 ? '0'+MM : MM;
+                dd = dd<9 ? '0'+dd : dd;
+                HH = HH<9 ? '0'+HH : HH;
+                mm = mm<9 ? '0'+mm : mm;
+                ss = ss<9 ? '0'+ss : ss;
+
+                let now = new Date().getTime()-time;
+                let n_dd = Math.floor(now/1000/60/60/24);
+                if( n_dd<1 ){
+                    timeStr = HH+':'+mm;
+                }else if( n_dd==1 ){
+                    timeStr = '昨天'+HH+':'+mm;
+                }else if( n_dd==2 ){
+                    timeStr = '前天'+HH+':'+mm;
+                }else{
+                    timeStr = yyyy+'年'+MM+'月'+dd+'日';
+                };
+                return timeStr;
             },
             // 评论详情
             getComment (id) {
+                this.isLoading = true;
                 let self = this;
                 let url = 'https://api.imjad.cn/cloudmusic/?type=comments&id='+id;
                 axios.get(window.location.origin.replace(/[0-9]+$/,'8081')+'/proxy.php',{
@@ -139,6 +179,7 @@
                         let data = response.data;
                         self.comments = data.comments;
                         self.hotComments = data.hotComments;
+                        setTimeout(()=>{self.isLoading = false},500);
                         //console.log(data.comments);
                         //console.log(data.hotComments);
                     })
@@ -225,13 +266,15 @@
                         }
                         .comment-body {
                             padding: 5px*$n 0;
-                            font-size: 12px*$n;
                             .comment-con {
                                 padding: 5px*$n 0;
+                                line-height: 22px*$n;
                             }
                             .comment-beReplied {
+                                line-height: 16px*$n;
                                 padding: 5px*$n !important;
                                 border-radius: 3px*$n;
+                                font-size: 12px*$n !important;
                             }
                         }
                     }
@@ -251,6 +294,13 @@
         background: #fff;
 
         @include musicComment;
+
+        .fade-out-leave-active {
+            transition: opacity 0.3s;
+        }
+        .fade-out-leave-active {
+            opacity: 0;
+        }
 
         .music-header {
             width: 100%;
@@ -304,6 +354,7 @@
                     .comment-box {
                         .comment-header {
                             width: 100%;
+                            color: #666;
                             .comment-title {
                                 em {
                                     color: #f66;
@@ -316,10 +367,7 @@
                             }
                         }
                         .comment-body {
-                            padding: 5px 0;
-                            font-size: 12px;
                             .comment-con {
-                                padding: 5px 0;
                                 em {
                                     color: #6cf;
                                 }

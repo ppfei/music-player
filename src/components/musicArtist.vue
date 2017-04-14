@@ -2,7 +2,7 @@
     <div id="music-artist">
         <div class="music-header">
             <span class="back" @click="close">&times;</span>
-            <b class="title">歌手: {{ artist.name }}</b>
+            <b class="title">歌手: {{ staticMusic.ar.name }}</b>
         </div>
         <div class="music-body">
             <div class="music-des">
@@ -16,11 +16,15 @@
                 <li class="flex-h" v-for="(item, index) of searchList" :class="{'check': isCheck(item)}"><p @click="addAndChangeMusic(item)">{{ item.name }}<em> - {{ item.ar.name }}</em></p><span @click="addSong(item)">+</span></li>
             </ul>
         </div>
+        <transition name="fade-out">
+            <loading v-if="isLoading"></loading>
+        </transition>
     </div>
 </template>
 
 <script>
     import axios from 'axios'
+    import loading from './loading'
     export default {
         props:{
             musicList: {
@@ -45,6 +49,9 @@
                 }
             }
         },
+        components: {
+            loading
+        },
         data () {
             return {
                 searchList: [],
@@ -54,6 +61,21 @@
                     name: '',
                     picUrl: '',
                     briefDesc: ''
+                },
+                isLoading: true,
+                staticMusic: {
+                    id: 0,
+                    name: '',
+                    al: {
+                        id: 0,
+                        name: '',
+                        picUrl: '',
+                    },
+                    ar: {
+                        id: 0,
+                        name: ''
+                    },
+                    mv: 0
                 }
             }
         },
@@ -61,6 +83,7 @@
             beforeShow () {
                 if(this.artistId == this.activeMusic.ar.id) return;
                 this.artistId = this.activeMusic.ar.id;
+                this.staticMusic = this.activeMusic;
                 this.getArtist(this.artistId);
             },
             close () {
@@ -68,6 +91,7 @@
             },
             // 歌手详情
             getArtist (id) {
+                this.isLoading = true;
                 let self = this;
                 let url = 'https://api.imjad.cn/cloudmusic/?type=artist&id='+id;
                 axios.get(window.location.origin.replace(/[0-9]+$/,'8081')+'/proxy.php',{
@@ -104,6 +128,7 @@
                             };
                             self.searchList.push(result);
                         });
+                        setTimeout(()=>{self.isLoading = false},500);
                     })
                     .catch(function (error) {
                         alert(error);
@@ -203,6 +228,13 @@
         background: #fff;
 
         @include musicArtist;
+
+        .fade-out-leave-active {
+            transition: opacity 0.3s;
+        }
+        .fade-out-leave-active {
+            opacity: 0;
+        }
 
         .music-header {
             width: 100%;

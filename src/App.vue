@@ -25,9 +25,6 @@
     <transition name="page-fade">
       <music-comment ref="commentIsShow" :activeMusic="getSongInfo" v-show="commentIsShow" @event-closePage="closePage('commentIsShow')"></music-comment>
     </transition>
-    <transition name="page-fade">
-      <music-mv ref="mvIsShow" :musicList="getMusicList" :activeMusic="getSongInfo" v-show="mvIsShow" @event-closePage="closePage('mvIsShow')" @event-addSong="addSong" @event-changeMusic="changeMusicByIndex"></music-mv>
-    </transition>
     <!--<div class="info" style="position:fixed;z-index:999;">
       <p>state: {{ state }}</p>
       <p>index: {{index}}</p>
@@ -46,7 +43,6 @@ import musicSearch from './components/musicSearch'
 import musicArtist from './components/musicArtist'
 import musicAlbum from './components/musicAlbum'
 import musicComment from './components/musicComment'
-import musicMv from './components/musicMv'
 
 export default {
   name: 'app',
@@ -179,8 +175,7 @@ export default {
     musicSearch,
     musicArtist,
     musicAlbum,
-    musicComment,
-    musicMv
+    musicComment
   },
   computed: {
     // 获取歌曲信息

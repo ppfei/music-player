@@ -2,11 +2,11 @@
     <div id="music-album">
         <div class="music-header">
             <span class="back" @click="close">&times;</span>
-            <b class="title">专辑: {{ album.name }}</b>
+            <b class="title">专辑: {{ staticMusic.al.name }}</b>
         </div>
         <div class="music-body">
             <div class="music-des">
-                <img :src="album.picUrl" :alt="album.name">
+                <img :src="staticMusic.al.picUrl" :alt="staticMusic.al.name">
                 <div class="des-box">
                     <p class="des-title">{{ album.name }}</p>
                     <p class="des-info">{{ album.description }}</p>
@@ -16,11 +16,15 @@
                 <li class="flex-h" v-for="(item, index) of searchList" :class="{'check': isCheck(item)}"><p @click="addAndChangeMusic(item)">{{ item.name }}<em> - {{ item.ar.name }}</em></p><span @click="addSong(item)">+</span></li>
             </ul>
         </div>
+        <transition name="fade-out">
+            <loading v-if="isLoading"></loading>
+        </transition>
     </div>
 </template>
 
 <script>
     import axios from 'axios'
+    import loading from './loading'
     export default {
         props:{
             musicList: {
@@ -45,6 +49,9 @@
                 }
             }
         },
+        components: {
+            loading
+        },
         data () {
             return {
                 searchList: [],
@@ -54,13 +61,29 @@
                     name: '',
                     picUrl: '',
                     description: ''
-                }
+                },
+                staticMusic: {
+                    id: 0,
+                    name: '',
+                    al: {
+                        id: 0,
+                        name: '',
+                        picUrl: '',
+                    },
+                    ar: {
+                        id: 0,
+                        name: ''
+                    },
+                    mv: 0
+                },
+                isLoading: true
             }
         },
         methods: {
             beforeShow () {
                 if(this.albumId == this.activeMusic.al.id) return;
                 this.albumId = this.activeMusic.al.id;
+                this.staticMusic = this.activeMusic;
                 this.getAlbum(this.albumId);
             },
             close () {
@@ -68,6 +91,7 @@
             },
             // 歌手详情
             getAlbum (id) {
+                this.isLoading = true;
                 let self = this;
                 let url = 'https://api.imjad.cn/cloudmusic/?type=album&id='+id;
                 axios.get(window.location.origin.replace(/[0-9]+$/,'8081')+'/proxy.php',{
@@ -104,6 +128,7 @@
                             };
                             self.searchList.push(result);
                         });
+                        setTimeout(()=>{self.isLoading = false},500);
                     })
                     .catch(function (error) {
                         alert(error);
@@ -203,6 +228,13 @@
         background: #fff;
 
         @include musicAlbum;
+
+        .fade-out-leave-active {
+            transition: opacity 0.3s;
+        }
+        .fade-out-leave-active {
+            opacity: 0;
+        }
 
         .music-header {
             width: 100%;
