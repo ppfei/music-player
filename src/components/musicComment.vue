@@ -180,8 +180,6 @@
                         self.comments = data.comments;
                         self.hotComments = data.hotComments;
                         setTimeout(()=>{self.isLoading = false},500);
-                        //console.log(data.comments);
-                        //console.log(data.hotComments);
                     })
                     .catch(function (error) {
                         alert(error);
