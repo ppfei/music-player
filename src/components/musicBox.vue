@@ -144,12 +144,10 @@
 
 			.lyric-list {
 				li {
-					height: 26px*$n;
 					line-height: 26px*$n;
 					font-size: 16px*$n;
 				}
 				li.active {
-					height: 36px*$n;
 					line-height: 36px*$n;
 					font-size: 18px*$n;
 				}
