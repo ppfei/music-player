@@ -15,24 +15,19 @@
 		<transition name="fade">
 			<div class="lyric-box" v-show="isShowLyric" @touchstart="isShowLyric = false" @click="isShowLyric = false" :style="{'z-index': isShowLyric? 1: 10}">
 				<div class="lyric-body">
-					<ul class="lyric-list" :style="{'top': -activeIndex*26*dpr+'px'}">
+					<ul ref="lyricList" class="lyric-list" :style="{'transform': 'translateY('+ -getLiTop +'px)'}">
 						<li v-for="(value,index) of lyric" :class="{'active': index==activeIndex}">{{ value }}</li>
 					</ul>
 				</div>
-				<div style="position:absolute;left:200%">{{ updataLrc }}</div>
 			</div>
 		</transition>
+		<div class="auxiliary">{{ updataLrc }}</div>
 	</div>
 </template>
 
 <script>
 	import axios from 'axios'
 	export default {
-		mounted () {
-			let dpr = document.documentElement.getAttribute('data-dpr');
-			if(!dpr) dpr = 1;
-			this.dpr = dpr;
-		},
 		props: {
 			activeMusic: Object,
 			isplay: String,
@@ -40,10 +35,10 @@
 		},
 		data () {
 			return {
-				dpr: 1,
 				isShowLyric: false,
 				time: [],
-				lyric: []
+				lyric: [],
+				nowIndex: 0
 			}
 		},
 		computed: {
@@ -56,7 +51,7 @@
 			},
 			// 计算当前高亮歌词的索引
 			activeIndex () {
-				let cTime = this.currentTime-200; // -200是歌词提前200毫秒
+				let cTime = this.currentTime-200; // -300是歌词提前300毫秒
 				let leng = this.time.length;
 				if(!leng) return 0;
 				let index = this.time.findIndex(value=>{
@@ -65,7 +60,16 @@
 				if(index<=0){
 					index = cTime>0 && cTime>this.time[0] ? leng : 1;
 				}
+				this.nowIndex = index-1;
 				return index-1;
+			},
+			// 计算高亮歌词的位置
+			getLiTop () {
+				let index = this.nowIndex;
+				if(!this.$refs.lyricList) return 0;
+				let oLi = this.$refs.lyricList.querySelectorAll('li')[index];
+				if(!oLi) return 0;
+				return oLi.offsetTop;
 			}
 		},
 		methods: {
@@ -75,7 +79,7 @@
 			// 获取歌词
 			getLyric (id) {
 				this.time = [];
-				this.lyric = [];
+				this.lyric = ['正在获取歌词'];
 				let self = this;
 				if( !(typeof id === 'number') ) id = this.musicList[this.index].id;
 				let url = 'https://api.imjad.cn/cloudmusic/?type=lyric&id='+id;
@@ -85,7 +89,13 @@
 					.then(function (response) {
 						if(response.data.code != 200){
 							self.lyric = ['歌词获取失败，静心聆听音乐'];
+							return false;
 						}
+						if(!response.data.lrc){
+							self.lyric = ['静心聆听音乐'];
+							return false;
+						}
+						self.lyric = [];
 						let str = response.data.lrc.lyric;
 						let sArr = str.split('\n');
 						sArr.pop();
@@ -98,7 +108,7 @@
 
 					})
 					.catch(function (error) {
-						self.lyric = ['歌词获取失败，静心聆听音乐1'];
+						self.lyric = ['歌词获取失败，静心聆听音乐'];
 					});
 			},
 			// 转换成时间毫秒数
@@ -246,12 +256,11 @@
 			.lyric-list {
 				width: 100%;
 				height: 9999px;
-				position: absolute;
-				left: 0;
-				top: 0;
+				transform: translateY(0);
 				text-align: center;
-				margin-top: 28%;
-				transition: top .3s;
+				position: absolute;
+				top: 28%;
+				transition: transform .3s;
 
 				li {
 					color: #ccc;
@@ -260,6 +269,10 @@
 					color: #fff;
 				}
 			}
+		}
+		.auxiliary {
+			position: absolute;
+			left: 200%;
 		}
 	}
 
