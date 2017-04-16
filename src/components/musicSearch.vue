@@ -59,7 +59,7 @@
                 let self = this;
                 if( str == '' ) return;
                 let url = 'https://api.imjad.cn/cloudmusic/?type=search&s='+str;
-                axios.get(window.location.origin.replace(/[0-9]+$/,'8081')+'/proxy.php',{
+                axios.get(window.location.origin+'/proxy.php',{
                         params:{ url: url }
                     })
                     .then(function (response) {
