@@ -17,13 +17,13 @@
 		<transition name="fade">
 			<div class="lyric-box" v-show="isShowLyric" @touchstart="isShowLyric = false" @click="isShowLyric = false" :style="{'z-index': isShowLyric? 1: 10}">
 				<div class="lyric-body">
-					<ul ref="lyricList" class="lyric-list" :style="{'transform': 'translateY('+ -getLiTop +'px)'}">
+					<ul ref="lyricList" class="lyric-list" :style="{'transform': 'translateY('+ -liTop +'px)'}">
 						<li v-for="(value,index) of lyric" :class="{'active': index==activeIndex}">{{ value }}</li>
 					</ul>
 				</div>
 			</div>
 		</transition>
-		<div class="auxiliary">{{ updataLrc }}</div>
+		<div class="auxiliary">{{ updataLrc+' : '+getLiTop }}</div>
 	</div>
 </template>
 
@@ -60,7 +60,8 @@
 				isShowLyric: false,
 				time: [],
 				lyric: [],
-				nowIndex: 0
+				nowIndex: 0,
+				liTop: 0
 			}
 		},
 		computed: {
@@ -91,6 +92,9 @@
 				if(!this.$refs.lyricList) return 0;
 				let oLi = this.$refs.lyricList.querySelectorAll('li')[index];
 				if(!oLi) return 0;
+				let top = oLi.offsetTop;
+				if(index!=0 && !top) return 0;
+				this.liTop = top;
 				return oLi.offsetTop;
 			}
 		},

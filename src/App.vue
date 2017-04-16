@@ -59,7 +59,8 @@ export default {
 		this.myAudio.onplay = ()=> {
 			this.timer = setInterval(()=>{
 				this.currentTime = this.myAudio.currentTime;
-				this.duration = this.myAudio.duration;
+				let duration = this.myAudio.duration;
+				this.duration = duration || 0;
 			},500);
 			this.state = 'play';
 		};
