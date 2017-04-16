@@ -87,6 +87,22 @@ export default {
 			this.changeMusic('next');
 		};
 		this.getSong();
+		// localStorage
+		if(window.localStorage){
+			let self = this;
+			let storage = window.localStorage;
+			let localMusicList = storage.getItem('localMusicList');
+			if(localMusicList){
+				let list = JSON.parse(localMusicList);
+				if(!list.length) return false;
+				list.forEach((value,index)=>{
+					list[index] = JSON.parse(list[index]);
+				});
+				this.musicList = list;
+			}else{
+				self.saveList();
+			}
+		}
 	},
 	data () {
 		return {
@@ -348,6 +364,8 @@ export default {
 				this.index = _index;
 				this.getSong();
 			}
+			// 更新本地列表
+			this.saveList();
 		},
 		// 显示页面
 		showPage (str) {
@@ -368,6 +386,18 @@ export default {
 			});
 			if(test) return;
 			this.musicList.push(data);
+			// 存入本地
+			this.saveList();
+		},
+		// 本地存储
+		saveList () {
+			if(!window.localStorage) return false;
+			let storage = window.localStorage;
+			let mList = [];
+			this.musicList.forEach(value=>{
+				mList.push(JSON.stringify(value));
+			});
+			storage.setItem('localMusicList', JSON.stringify(mList));
 		}
 	}
 }
