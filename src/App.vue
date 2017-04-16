@@ -4,7 +4,13 @@
 		<audio src="###" style="display:none" id="audio"></audio>
 		<music-box :activeMusic="getSongInfo" :isplay="state" :currentTime="Math.floor(currentTime*1000)" @event-showPage="showPage"></music-box>
 		<music-bar @event-play="play" @event-change="changeMusic" @event-loop="changeLoop" @event-control="eventControl" @event-showList="showList('show')" :loop="loopType" :playState="state" :time="getTime"></music-bar>
-		<div id="back-img" :style="{'background-image':'url('+getSongInfo.al.picUrl+')'}"></div>
+		<div id="back-img">
+			<div class="bg-box">
+				<div class="bg lazyBg" :style="{'background-image':'url('+lazyPicUrl+')'}"></div>
+				<div class="bg activeBg" :class="{'active': bgLoaded}" :style="{'background-image':'url('+updateBgUrl+')'}"></div>
+			</div>
+			<div class="bg-bottom" :style="{'background-image':'url('+lazyPicUrl+')'}"></div>
+		</div>
 		<!-- 歌曲列表 -->
 		<div id="music-list" :class="{'show': listIsShow=='show'}">
 			<div id="music-list-bg" @click="showList('hide')"></div>
@@ -167,6 +173,12 @@ export default {
 			commentIsShow: false,
 			// mv页显示状态
 			mvIsShow: false,
+			// 用于过渡图片
+			lazyPicUrl: '',
+			//
+			activeMusic: {},
+			//
+			bgLoaded: false
 		}
 	},
 	components: {
@@ -180,7 +192,9 @@ export default {
 	computed: {
 		// 获取歌曲信息
 		getSongInfo () {
-			return this.musicList[this.index];
+			let info = this.musicList[this.index];
+			this.activeMusic = info;
+			return info;
 		},
 		// 获取歌曲时间
 		getTime () {
@@ -196,6 +210,19 @@ export default {
 			}else{
 				return []
 			}
+		},
+		updateBgUrl () {
+			let url = this.activeMusic.al.picUrl;
+			this.bgLoaded = false;
+			let oImg = new Image();
+			oImg.onload = ()=>{
+				this.bgLoaded = true;
+				setTimeout(()=>{
+					this.lazyPicUrl = url;
+				},100)
+			};
+			oImg.src = url;
+			return url;
 		}
 	},
 	methods: {
@@ -445,13 +472,42 @@ export default {
 	#back-img {
 		position: absolute;
 		z-index: 1;
-		top: -0.5rem;
-		left: -0.5rem;
-		bottom: -0.5rem;
-		right: -0.5rem;
-		background-size: cover;
-		background-position: center center;
-		filter: blur(10px);
+		width: 100%;
+		height: 100%;
+		transform: scale(1.16);
+		background-color: #fff;
+
+		.bg-bottom {
+			width: 100%;
+			height: 100%;
+			background-size: cover;
+			background-position: center center;
+		}
+
+		.bg-box {
+			width: 100%;
+			height: 100%;
+			position: absolute;
+			filter: blur(5px);
+		}
+
+		.bg {
+			position: absolute;
+			top: 0;
+			left: 0;
+			width: 100%;
+			height: 100%;
+			background-size: cover;
+			background-position: center center;
+		}
+		.activeBg {
+			opacity: 0;
+			z-index: 2;
+		}
+		.activeBg.active {
+			animation: bgFade 0.09s linear;
+			opacity: 1;
+		}
 
 		&:after {
 			position: absolute;
@@ -462,7 +518,17 @@ export default {
 			content: '';
 			display: block;
 			background: black;
-			opacity: 0.4;
+			opacity: 0.6;
+			z-index: 5;
+		}
+	}
+
+	@keyframes bgFade {
+		from {
+			transform: scale(.8);
+		}
+		to {
+			transform: scale(1);
 		}
 	}
 
