@@ -109,7 +109,7 @@
 				let self = this;
 				if( !(typeof id === 'number') ) id = this.musicList[this.index].id;
 				let url = 'https://api.imjad.cn/cloudmusic/?type=lyric&id='+id;
-				axios.get(window.location.origin+'/proxy.php',{
+				axios.get('http://xiaodidiao.com/proxy.php',{
 						params:{ url: url }
 					})
 					.then(function (response) {

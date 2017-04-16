@@ -306,7 +306,7 @@ export default {
 			if( !(typeof id === 'number') ) id = this.musicList[this.index].id;
 			let self = this;
 			let url = 'https://api.imjad.cn/cloudmusic/?type=song&id='+id+'&br=128000';
-			axios.get(window.location.origin+'/proxy.php',{
+			axios.get('http://xiaodidiao.com/proxy.php',{
 					params:{ url: url }
 				})
 				.then(function (response) {
