@@ -1,8 +1,8 @@
 <template>
 	<div id="music-box">
 		<transition name="fade">
-			<div class="song-main" v-show="!isShowLyric">
-				<div class="song-icon" @click="isShowLyric = true"><img :class="{'play':isplay=='play'}" :src="activeMusic.al.picUrl" alt="song-icon"></div>
+			<div class="song-main" v-show="!isShowLyric" :style="{'z-index': isShowLyric? 10: 1}">
+				<div class="song-icon" @touchstart="isShowLyric = true" @click="isShowLyric = true"><img :class="{'play':isplay=='play'}" :src="activeMusic.al.picUrl" alt="song-icon"></div>
 				<div class="song-info">
 					<ul class="flex-h">
 						<li class="song-ar" @click="showPage('artistIsShow')"><i class="iconfont">&#xe6f4;</i> {{ activeMusic.ar.name }}</li>
@@ -13,9 +13,9 @@
 			</div>
 		</transition>
 		<transition name="fade">
-			<div class="lyric-box" v-show="isShowLyric" @click="isShowLyric = false">
+			<div class="lyric-box" v-show="isShowLyric" @touchstart="isShowLyric = false" @click="isShowLyric = false" :style="{'z-index': isShowLyric? 1: 10}">
 				<div class="lyric-body">
-					<ul class="lyric-list" :style="{'top': -activeIndex*26*getDpr()+'px'}">
+					<ul class="lyric-list" :style="{'top': -activeIndex*26*dpr+'px'}">
 						<li v-for="(value,index) of lyric" :class="{'active': index==activeIndex}">{{ value }}</li>
 					</ul>
 				</div>
@@ -28,6 +28,11 @@
 <script>
 	import axios from 'axios'
 	export default {
+		mounted () {
+			let dpr = document.documentElement.getAttribute('data-dpr');
+			if(!dpr) dpr = 1;
+			this.dpr = dpr;
+		},
 		props: {
 			activeMusic: Object,
 			isplay: String,
@@ -35,6 +40,7 @@
 		},
 		data () {
 			return {
+				dpr: 1,
 				isShowLyric: false,
 				time: [],
 				lyric: []
@@ -101,12 +107,6 @@
 				let tArr = timeStr.split(':');
 				let tNum = Math.floor(tArr[0]*60*1000 + tArr[1]*1000);
 				return tNum;
-			},
-			// 获取像素dpr
-			getDpr () {
-				let dpr = document.documentElement.getAttribute('data-dpr');
-				if(!dpr) dpr = 1;
-				return dpr;
 			}
 		}
 	}
