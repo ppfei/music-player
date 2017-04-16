@@ -2,7 +2,9 @@
 	<div id="music-box">
 		<transition name="fade">
 			<div class="song-main" v-show="!isShowLyric" :style="{'z-index': isShowLyric? 10: 1}">
-				<div class="song-icon" @touchstart="isShowLyric = true" @click="isShowLyric = true"><img :class="{'play':isplay=='play'}" :src="activeMusic.al.picUrl" alt="song-icon"></div>
+				<div class="song-icon" @touchstart="isShowLyric = true" @click="isShowLyric = true">
+					<img :class="{'play':isplay=='play'}" :src="imgUrl" alt="song-icon">
+				</div>
 				<div class="song-info">
 					<ul class="flex-h">
 						<li class="song-ar" @click="showPage('artistIsShow')"><i class="iconfont">&#xe6f4;</i> {{ activeMusic.ar.name }}</li>
@@ -29,7 +31,27 @@
 	import axios from 'axios'
 	export default {
 		props: {
-			activeMusic: Object,
+			imgUrl: {
+				type: String,
+				default: ''
+			},
+			activeMusic: {
+				type: Object,
+				default: {
+                    id: 0,
+                    name: '',
+                    al: {
+                        id: 0,
+                        name: '',
+                        picUrl: '',
+                    },
+                    ar: {
+                        id: 0,
+                        name: ''
+                    },
+                    mv: 0
+				}
+			},
 			isplay: String,
 			currentTime: Number
 		},

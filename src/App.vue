@@ -2,7 +2,7 @@
 	<div id="app">
 		<div id="music-header">{{ getSongInfo.name }}<i class="music-search-btn iconfont" @click="searchIsShow=true">&#xe6f1;</i></div>
 		<audio src="###" style="display:none" id="audio"></audio>
-		<music-box :activeMusic="getSongInfo" :isplay="state" :currentTime="Math.floor(currentTime*1000)" @event-showPage="showPage"></music-box>
+		<music-box :imgUrl="lazyPicUrl" :activeMusic="getSongInfo" :isplay="state" :currentTime="Math.floor(currentTime*1000)" @event-showPage="showPage"></music-box>
 		<music-bar @event-play="play" @event-change="changeMusic" @event-loop="changeLoop" @event-control="eventControl" @event-showList="showList('show')" :loop="loopType" :playState="state" :time="getTime"></music-bar>
 		<div id="back-img">
 			<div class="bg-box">
@@ -59,6 +59,7 @@ export default {
 		this.myAudio.onplay = ()=> {
 			this.timer = setInterval(()=>{
 				this.currentTime = this.myAudio.currentTime;
+				this.duration = this.myAudio.duration;
 			},500);
 			this.state = 'play';
 		};
@@ -77,9 +78,10 @@ export default {
 			this.state = 'play';
 		};
 		// 当音乐元数据加载完成时
+		/*this.myAudio.onloadedmetadata = 
 		this.myAudio.oncanplay = ()=> {
 			this.duration = this.myAudio.duration;
-		};
+		};*/
 		// 当音乐播放结束时
 		this.myAudio.onended = ()=> {
 			this.changeMusic('next');
@@ -303,20 +305,6 @@ export default {
 				})
 				.catch(function (error) {
 					alert(error);
-				});
-		},
-		// 获取MV
-		getMv (id) {
-			if( !(typeof id === 'number') ) id = this.musicList[this.index].mv;
-			let url = 'https://api.imjad.cn/cloudmusic/?type=mv&id='+id;
-			axios.get(window.location.origin.replace(/[0-9]+$/,'8081')+'/proxy.php',{
-					params:{ url: url }
-				})
-				.then(function (response) {
-					console.log(response.data);
-				})
-				.catch(function (error) {
-					console.log(error);
 				});
 		},
 		// 进度条控制
