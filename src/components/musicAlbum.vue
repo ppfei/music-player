@@ -12,7 +12,7 @@
                     <p class="des-info">{{ album.description }}</p>
                 </div>
             </div>
-            <ul class="music-list">
+            <ul ref="list" class="music-list">
                 <li class="flex-h" v-for="(item, index) of searchList" :class="{'check': isCheck(item)}"><p @click="addAndChangeMusic(item)">{{ item.name }}<em> - {{ item.ar.name }}</em></p><span @click="addSong(item)">+</span></li>
             </ul>
         </div>
@@ -103,6 +103,7 @@
                             console.log('搜索失败');
                             return false;
                         };
+						self.$refs.list.scrollTop = 0; // 返回顶部
                         let data = response.data;
                         self.album = {
                             'id': data.album.id,

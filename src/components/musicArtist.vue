@@ -4,7 +4,7 @@
             <span class="back" @click="close">&times;</span>
             <b class="title">歌手: {{ staticMusic.ar.name }}</b>
         </div>
-        <div class="music-body">
+        <div ref="list" class="music-body">
             <div class="music-des">
                 <img :src="artist.picUrl" :alt="artist.name">
                 <div class="des-box">
@@ -103,6 +103,7 @@
                             console.log('搜索失败');
                             return false;
                         };
+                        self.$refs.list.scrollTop = 0; // 返回顶部
                         let data = response.data;
                         self.artist = {
                             'id': data.artist.id,
