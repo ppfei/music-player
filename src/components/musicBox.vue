@@ -74,7 +74,7 @@
 			},
 			// 计算当前高亮歌词的索引
 			activeIndex () {
-				let cTime = this.currentTime-300; // -300是歌词提前300毫秒
+				let cTime = this.currentTime+300; // -300是歌词提前300毫秒
 				let leng = this.time.length;
 				if(!leng) return 0;
 				let index = this.time.findIndex(value=>{
@@ -193,11 +193,11 @@
 
 			.lyric-list {
 				li {
-					line-height: 26px*$n;
+					line-height: 30px*$n;
 					font-size: 16px*$n;
 				}
 				li.active {
-					line-height: 36px*$n;
+					line-height: 40px*$n;
 					font-size: 18px*$n;
 				}
 			}
@@ -302,7 +302,7 @@
 				transition: transform .3s;
 
 				li {
-					color: #ccc;
+					color: #bbb;
 				}
 				li.active {
 					color: #fff;
