@@ -16,7 +16,7 @@
 		</transition>
 		<transition name="fade">
 			<div class="lyric-box" v-show="isShowLyric" @touchstart="isShowLyric = false" @click="isShowLyric = false" :style="{'z-index': isShowLyric? 1: 10}">
-				{{currentTime}}<div class="lyric-body">
+				<div class="lyric-body">
 					<ul ref="lyricList" class="lyric-list" :style="{'transform': 'translateY('+ -liTop +'px)'}">
 						<li v-for="(value,index) of lyric" :class="{'active': index==activeIndex}">{{ value }}</li>
 					</ul>
@@ -102,7 +102,7 @@
 				this.isShowLyric = 'true';
 				setTimeout(()=>{
 					this.getTop();
-				},100);
+				},320);
 			},
 			// 获取高亮歌词的顶部距离
 			getTop (index) {
