@@ -14,12 +14,16 @@
                 </li>
             </ul>
         </div>
+        <transition name="fade-out">
+            <loading v-if="isLoading"></loading>
+        </transition>
         <div class="search-result">{{ searchStr }} : {{ getStr }}</div>
     </div>
 </template>
 
 <script>
     import axios from 'axios'
+    import loading from './loading'
     export default {
         props:{
             musicList: {
@@ -44,6 +48,9 @@
                 }
             }
         },
+        components: {
+            loading
+        },
         data () {
             return {
                 searchList: [
@@ -55,6 +62,7 @@
                     }
                 ],
                 searchStr: '',
+                isLoading: false
             }
         },
         computed: {
@@ -80,6 +88,7 @@
                 let self = this;
                 this.searchList = [];
                 if( str == '' ) return;
+                this.isLoading = true;
                 let url = 'https://api.imjad.cn/cloudmusic/?type=search&s='+str;
                 axios.get('http://xiaodidiao.com/proxy.php',{
                         params:{ url: url }
@@ -107,6 +116,7 @@
                                 'mv': value.mv
                             };
                             self.searchList.push(result);
+                            self.isLoading = false;
                         });
                     })
                     .catch(function (error) {
@@ -196,6 +206,13 @@
         z-index: 20;
         color: #333;
         background: #fff;
+
+        .fade-out-leave-active {
+            transition: opacity 0.3s;
+        }
+        .fade-out-leave-active {
+            opacity: 0;
+        }
 
         @include musicSearch;
 
