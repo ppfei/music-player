@@ -15,12 +15,12 @@
 		<div id="music-list" :class="{'show': listIsShow=='show'}">
 			<div id="music-list-bg" @click="showList('hide')"></div>
 			<ul class="music-list-box">
-				<li class="flex-h" v-for="(item, index) of getMusicList"><p @click="changeMusicByIndex(index)">{{ item.name }}<em> - {{ item.ar.name }}</em></p><span @click="removeSong(index)">&times;</span></li>
+				<li class="flex-h" v-for="(item, index) of getMusicList"><i v-if="getSongInfo.id == item.id" class="iconfont">&#xe6f4;</i><p @click="changeMusicByIndex(index)">{{ item.name }}<em> - {{ item.ar.name }}</em></p><span @click="removeSong(index)">&times;</span></li>
 			</ul>
 		</div>
 		<!-- 搜索和详情 -->
 		<transition name="page-fade">
-			<music-search :musicList="getMusicList" v-show="searchIsShow" @event-closePage="closePage('searchIsShow')" @event-addSong="addSong" @event-changeMusic="changeMusicByIndex"></music-search>
+			<music-search :musicList="getMusicList" :activeMusic="getSongInfo" v-show="searchIsShow" @event-closePage="closePage('searchIsShow')" @event-addSong="addSong" @event-changeMusic="changeMusicByIndex"></music-search>
 		</transition>
 		<transition name="page-fade">
 			<music-artist ref="artistIsShow" :musicList="getMusicList" :activeMusic="getSongInfo" v-show="artistIsShow" @event-closePage="closePage('artistIsShow')" @event-addSong="addSong" @event-changeMusic="changeMusicByIndex"></music-artist>
@@ -61,7 +61,7 @@ export default {
 				this.currentTime = this.myAudio.currentTime;
 				let duration = this.myAudio.duration;
 				this.duration = duration || 0;
-			},500);
+			},200);
 			this.state = 'play';
 		};
 		// 当音乐暂停时
@@ -561,10 +561,14 @@ export default {
 			li {
 				height: 40px*$n;
 				line-height: 40px*$n;
-				padding: 0 20px*$n;
+				padding: 0 30px*$n;
 
 				em {
 					font-size: 12px*$n;
+				}
+				.iconfont {
+					font-size: 12px*$n;
+					left: 10px*$n;
 				}
 				span {
 					width: 40px*$n;
@@ -576,49 +580,53 @@ export default {
 		}
 	}
 	#music-list{
+		width: 100%;
+		height: 100%;
+		position: absolute;
+		bottom: -100%;
+		left: 0;
+		z-index: 20;
+		color: #333;
+		@include musicList;
+
+		.music-list-box {
 			width: 100%;
-			height: 100%;
+			height: 60%;
+			background: #fff;
 			position: absolute;
 			bottom: -100%;
 			left: 0;
-			z-index: 20;
-			color: #333;
-			@include musicList;
+			overflow-y: auto;
+			border-top: 2px solid #f66;
+			box-shadow: 0 0 10px #333;
+			transition: bottom .3s ease-out;
 
-			.music-list-box {
+			li {
+				position: relative;
+				border-bottom: 1px solid #efefef;
+
+				p {
 					width: 100%;
-					height: 60%;
-					background: #fff;
+					height: 100%;
+					overflow: hidden;
+				}
+				em {
+					color: #aaa;
+				}
+				.iconfont {
 					position: absolute;
-					bottom: -100%;
-					left: 0;
-					overflow-y: auto;
-					border-top: 2px solid #f66;
-					box-shadow: 0 0 10px #333;
-					transition: bottom .3s ease-out;
-
-					li {
-						position: relative;
-						border-bottom: 1px solid #efefef;
-
-						p {
-							width: 100%;
-							height: 100%;
-							overflow: hidden;
-						}
-						em {
-							color: #aaa;
-						}
-						span {
-							position: absolute;
-							text-align: center;
-							color: red;
-							top: 0;
-							background: #fff;
-							cursor: pointer;
-						}
-					}
+					color: #f66;
+				}
+				span {
+					position: absolute;
+					text-align: center;
+					color: red;
+					top: 0;
+					background: #fff;
+					cursor: pointer;
+				}
 			}
+		}
 	}
 	#music-list.show {
 		bottom: 0;
@@ -631,11 +639,11 @@ export default {
 		}
 	}
 	#music-list-bg {
-			width: 100%;
-			height: 100%;
-			background: rgba(0,0,0,.4);
-			opacity: 0;
-			transition: opacity 0.3s;
+		width: 100%;
+		height: 100%;
+		background: rgba(0,0,0,.4);
+		opacity: 0;
+		transition: opacity 0.3s;
 	}
 	[data-dpr="2"] #music-list {
 		@include musicList(2);

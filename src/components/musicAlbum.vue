@@ -13,7 +13,11 @@
                 </div>
             </div>
             <ul ref="list" class="music-list">
-                <li class="flex-h" v-for="(item, index) of searchList" :class="{'check': isCheck(item)}"><p @click="addAndChangeMusic(item)">{{ item.name }}<em> - {{ item.ar.name }}</em></p><span @click="addSong(item)">+</span></li>
+                <li class="flex-h" v-for="(item, index) of searchList" :class="{'check': isCheck(item)}">
+                    <i v-if="activeMusic.id == item.id" class="iconfont">&#xe6f4;</i>
+                    <p @click="addAndChangeMusic(item)">{{ item.name }}<em> - {{ item.ar.name }}</em></p>
+                    <span @click="addSong(item)">+</span>
+                </li>
             </ul>
         </div>
         <transition name="fade-out">
@@ -203,10 +207,15 @@
             .music-list {
                 li {
                     height: 40px*$n;
+                    padding: 0 10px*$n;
                     line-height: 40px*$n;
 
                     em {
                         font-size: 12px*$n;
+                    }
+                    .iconfont {
+                        font-size: 12px*$n;
+                        left: -10px*$n;
                     }
                     span {
                         width: 40px*$n;
@@ -292,6 +301,10 @@
                     }
                     em {
                         color: #aaa;
+                    }
+                    .iconfont {
+                        position: absolute;
+                        color: #f66;
                     }
                     span {
                         position: absolute;

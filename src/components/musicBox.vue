@@ -2,7 +2,7 @@
 	<div id="music-box">
 		<transition name="fade">
 			<div class="song-main" v-show="!isShowLyric" :style="{'z-index': isShowLyric? 10: 1}">
-				<div class="song-icon" @touchstart="isShowLyric = true" @click="isShowLyric = true">
+				<div class="song-icon" @touchstart="isShowLyric = true" @click="showLyric">
 					<img :class="{'play':isplay=='play'}" :src="imgUrl" alt="song-icon">
 				</div>
 				<div class="song-info">
@@ -16,7 +16,7 @@
 		</transition>
 		<transition name="fade">
 			<div class="lyric-box" v-show="isShowLyric" @touchstart="isShowLyric = false" @click="isShowLyric = false" :style="{'z-index': isShowLyric? 1: 10}">
-				<div class="lyric-body">
+				{{currentTime}}<div class="lyric-body">
 					<ul ref="lyricList" class="lyric-list" :style="{'transform': 'translateY('+ -liTop +'px)'}">
 						<li v-for="(value,index) of lyric" :class="{'active': index==activeIndex}">{{ value }}</li>
 					</ul>
@@ -74,7 +74,7 @@
 			},
 			// 计算当前高亮歌词的索引
 			activeIndex () {
-				let cTime = this.currentTime-200; // -300是歌词提前300毫秒
+				let cTime = this.currentTime-300; // -300是歌词提前300毫秒
 				let leng = this.time.length;
 				if(!leng) return 0;
 				let index = this.time.findIndex(value=>{
@@ -89,6 +89,24 @@
 			// 计算高亮歌词的位置
 			getLiTop () {
 				let index = this.nowIndex;
+				this.getTop(index);
+			}
+		},
+		methods: {
+			// 触发显示详情页
+			showPage (str) {
+				this.$emit('event-showPage', str);
+			},
+			// 显示歌词
+			showLyric () {
+				this.isShowLyric = 'true';
+				setTimeout(()=>{
+					this.getTop();
+				},100);
+			},
+			// 获取高亮歌词的顶部距离
+			getTop (index) {
+				index = index || this.nowIndex;
 				if(!this.$refs.lyricList) return 0;
 				let oLi = this.$refs.lyricList.querySelectorAll('li')[index];
 				if(!oLi) return 0;
@@ -96,11 +114,6 @@
 				if(index!=0 && !top) return 0;
 				this.liTop = top;
 				return oLi.offsetTop;
-			}
-		},
-		methods: {
-			showPage (str) {
-				this.$emit('event-showPage', str);
 			},
 			// 获取歌词
 			getLyric (id) {

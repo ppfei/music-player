@@ -7,7 +7,11 @@
         </div>
         <div class="music-search-body">
             <ul class="music-search-list">
-                <li class="flex-h" v-for="(item, index) of searchList" :class="{'check': isCheck(item)}"><p @click="addAndChangeMusic(item)">{{ item.name }}<em> - {{ item.ar.name }}</em></p><span @click="addSong(item)">+</span></li>
+                <li class="flex-h" v-for="(item, index) of searchList" :class="{'check': isCheck(item)}">
+                    <i v-if="activeMusic.id == item.id" class="iconfont">&#xe6f4;</i>
+                    <p @click="addAndChangeMusic(item)">{{ item.name }}<em> - {{ item.ar.name }}</em></p>
+                    <span @click="addSong(item)">+</span>
+                </li>
             </ul>
         </div>
         <div class="search-result">{{ searchStr }} : {{ getStr }}</div>
@@ -21,6 +25,23 @@
             musicList: {
                 type: Array,
                 default: []
+            },
+            activeMusic: {
+                type: Object,
+                default: {
+                    id: 0,
+                    name: '',
+                    al: {
+                        id: 0,
+                        name: '',
+                        picUrl: '',
+                    },
+                    ar: {
+                        id: 0,
+                        name: ''
+                    },
+                    mv: 0
+                }
             }
         },
         data () {
@@ -38,7 +59,7 @@
         },
         computed: {
             getStr (){
-                this.searchStr = this.searchStr.trim();
+                this.searchStr = this.searchStr.replace(/^\s*/,'');
                 if(this.searchTimer) clearTimeout(this.searchTimer);
                 if(this.searchStr == ''){
                     this.searchList = [];
@@ -57,6 +78,7 @@
             // 搜索歌曲
             searchSong (str) {
                 let self = this;
+                this.searchList = [];
                 if( str == '' ) return;
                 let url = 'https://api.imjad.cn/cloudmusic/?type=search&s='+str;
                 axios.get('http://xiaodidiao.com/proxy.php',{
@@ -145,10 +167,14 @@
                 li {
                     height: 40px*$n;
                     line-height: 40px*$n;
-                    padding: 0 20px*$n;
+                    padding: 0 30px*$n;
 
                     em {
                         font-size: 12px*$n;
+                    }
+                    .iconfont {
+                        font-size: 12px*$n;
+                        left: 10px*$n;
                     }
                     span {
                         width: 40px*$n;
@@ -229,6 +255,10 @@
                     }
                     em {
                         color: #aaa;
+                    }
+                    .iconfont {
+                        position: absolute;
+                        color: #f66;
                     }
                     span {
                         position: absolute;
