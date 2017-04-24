@@ -2,6 +2,8 @@
 
 > A Vue.js project
 
+查看[demo](http://xiaodidiao.com/demo/music)
+
 ## 关于代理
 
 跨域问题，需要后台做代理；请修改代理请求的代码
